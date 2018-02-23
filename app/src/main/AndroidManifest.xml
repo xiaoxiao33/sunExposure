@@ -18,7 +18,11 @@
         </activity>
         <activity android:name=".Menu" />
         <activity android:name=".ExposureDiagram" />
-        <activity android:name=".Questions"></activity>
+        <activity android:name=".Questions" />
+        <activity android:name=".QuestionsTwo" />
+        <activity android:name=".Questions3" />
+        <activity android:name=".Questions4" />
+        <activity android:name=".Questions5"></activity>
     </application>
 
 </manifest>
