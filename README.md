@@ -1,1 +1,2 @@
 # sunExposure
+cannot output point.
