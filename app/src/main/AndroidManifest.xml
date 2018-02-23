@@ -17,7 +17,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".Menu" />
-        <activity android:name=".ExposureDiagram" />
+        <activity android:name=".ExposureDiagram" android:screenOrientation="landscape"/>
         <activity android:name=".Questions"></activity>
     </application>
 
