@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.xiaoxiaoouyang.sunexposure">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -16,13 +17,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Menu" />
-        <activity android:name=".ExposureDiagram" android:screenOrientation="landscape"/>
+        <activity
+            android:name=".Menu"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ExposureDiagram"
+            android:screenOrientation="landscape" />
         <activity android:name=".Questions" />
         <activity android:name=".QuestionsTwo" />
         <activity android:name=".Questions3" />
         <activity android:name=".Questions4" />
-        <activity android:name=".Questions5"></activity>
+        <activity android:name=".Questions5" />
+
+        <service
+            android:name=".GPSService"
+            android:exported="false"></service>
+
     </application>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
 
 </manifest>

@@ -23,4 +23,5 @@ public class Menu extends AppCompatActivity {
         Intent intent = new Intent(this, Questions.class);
         startActivity(intent);
     }
+
 }
