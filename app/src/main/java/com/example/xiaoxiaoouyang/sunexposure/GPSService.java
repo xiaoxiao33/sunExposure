@@ -1,6 +1,7 @@
 package com.example.xiaoxiaoouyang.sunexposure;
 
 
+import android.Manifest;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -15,20 +16,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.telephony.CellInfo;
-import android.telephony.CellInfoGsm;
-import android.telephony.CellInfoLte;
-import android.telephony.CellInfoWcdma;
-import android.telephony.CellSignalStrengthGsm;
-import android.telephony.CellSignalStrengthLte;
-import android.telephony.CellSignalStrengthWcdma;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Iterator;
-import java.util.List;
 
 
 public class GPSService extends Service {
@@ -59,39 +50,10 @@ public class GPSService extends Service {
     private MyGpsListener myGpsListener;
 
     private MyLocationListener myLocationListener;
-//    private TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+//    private TelephonyManager telephonyManager;
 
     private LocationManager lm;
-
-
-//    public int getCellSignal() {
-//        checkPermission(context);
-//        List<CellInfo> cellInfos = telephonyManager.getAllCellInfo();
-//        //This will give info of all sims present inside your mobile
-//        int strength = -1;
-//        if (cellInfos != null){
-//            for (int i = 0 ; i<cellInfos.size(); i++){
-//                if (cellInfos.get(i).isRegistered()){
-//                    if(cellInfos.get(i) instanceof CellInfoWcdma){
-//                        CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) telephonyManager.getAllCellInfo().get(0);
-//                        CellSignalStrengthWcdma cellSignalStrengthWcdma = cellInfoWcdma.getCellSignalStrength();
-//                        strength = cellSignalStrengthWcdma.getDbm();
-//                    } else if(cellInfos.get(i) instanceof CellInfoGsm){
-//                        CellInfoGsm cellInfogsm = (CellInfoGsm) telephonyManager.getAllCellInfo().get(0);
-//                        CellSignalStrengthGsm cellSignalStrengthGsm = cellInfogsm.getCellSignalStrength();
-//                        strength = cellSignalStrengthGsm.getDbm();
-//                    } else if(cellInfos.get(i) instanceof CellInfoLte){
-//                        CellInfoLte cellInfoLte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
-//                        CellSignalStrengthLte cellSignalStrengthLte = cellInfoLte.getCellSignalStrength();
-//                        strength = cellSignalStrengthLte.getDbm();
-//                    }
-//                }
-//            }
-//            return strength;
-//        }
-//        return strength;
-//    }
-
+    private Location loc;
 
 
     private Handler m_handler;
@@ -109,6 +71,7 @@ public class GPSService extends Service {
 //            sendBroadcastMessage(location);
             longitude = location.getLongitude();
             latitude = location.getLatitude();
+            loc = location;
 
         }
 
@@ -132,6 +95,7 @@ public class GPSService extends Service {
         public MyGpsListener(Context c) {
             checkPermission(c);
             lm.addGpsStatusListener(myGpsListener);
+            System.out.println("GPSstatus Listener attached");
         }
 
         @Override
@@ -184,8 +148,11 @@ public class GPSService extends Service {
                 System.out.println(latitude);
                 System.out.println("Satellites number: ");
                 System.out.println(numOfSatellites);
+                sendBroadcastMessage(numOfSatellites);
+                sendBroadcastMessage(loc);
 
-                m_handler.postDelayed(m_handlerTask, 3000);
+
+                m_handler.postDelayed(m_handlerTask, 1000);
 
             }
         };
@@ -263,11 +230,13 @@ public class GPSService extends Service {
 
 
     private void checkPermission(Context context) {
-        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED) {
-            Log.e("first","error");
+        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION ) != PackageManager.PERMISSION_GRANTED) {
+         Log.e("first","error");
         }
         try {
             lm = (LocationManager) context.getSystemService(LOCATION_SERVICE);
+            //telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         } catch (Exception e){
             e.printStackTrace();
         }
