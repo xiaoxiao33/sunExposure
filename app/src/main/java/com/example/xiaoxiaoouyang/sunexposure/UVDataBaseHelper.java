@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.example.xiaoxiaoouyang.sunexposure.database.UVDataDbSchema;
 import com.example.xiaoxiaoouyang.sunexposure.database.UVDataDbSchema.UVTable;
 
 public class UVDataBaseHelper extends SQLiteOpenHelper{
