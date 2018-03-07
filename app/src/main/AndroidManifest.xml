@@ -27,7 +27,7 @@
         <activity android:name=".QuestionsTwo" />
         <activity android:name=".Questions3" />
         <activity android:name=".Questions4" />
-        <activity android:name=".Questions5" />
+        <activity android:name=".Questions5" />p
 
         <service
             android:name=".GPSService"
@@ -36,6 +36,8 @@
     </application>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 
 
 

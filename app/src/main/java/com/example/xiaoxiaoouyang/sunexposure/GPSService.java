@@ -11,11 +11,16 @@ import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellSignalStrength;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -89,6 +94,34 @@ public class GPSService extends Service {
         }
     }
 
+    private void getwifiinfo(){
+        WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        if(wifi.isWifiEnabled()){
+            WifiInfo wifiInfo = wifi.getConnectionInfo();
+            if(String.valueOf(wifiInfo.getSupplicantState()).equals("COMPLETED")){
+                Toast.makeText(this, wifiInfo.getSSID()+"", Toast.LENGTH_SHORT).show();
+                int rssi = wifiInfo.getRssi();
+                int level = WifiManager.calculateSignalLevel(rssi, 10);
+                int percentage = (int) ((level/10.0)*100);
+                Log.v("wifi", "perc:" + String.valueOf(percentage));
+            }else{
+                Toast.makeText(this, "please connect to a wifi network! ", Toast.LENGTH_SHORT).show();
+            }
+        }else {
+            wifi.setWifiEnabled(true);
+        }
+    }
+    private void getCellsignal(){
+        TelephonyManager telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(TELEPHONY_SERVICE);
+        CellInfoGsm cellinfogsm = (CellInfoGsm)telephonyManager.getAllCellInfo().get(0);
+        CellSignalStrength cellSignalStrengthGsm = cellinfogsm.getCellSignalStrength();
+        int dbm = cellSignalStrengthGsm.getDbm();
+        int asuLevel = cellSignalStrengthGsm.getAsuLevel();
+        int level = cellSignalStrengthGsm.getLevel();
+        Log.v("Signal", "dbm:" + String.valueOf(dbm));
+        Log.v("Signal", "asu:" + String.valueOf(asuLevel));
+        Log.v("Signal", "level:" + String.valueOf(level));
+    }
 
     private class MyGpsListener implements GpsStatus.Listener {
 
@@ -148,6 +181,11 @@ public class GPSService extends Service {
                 System.out.println(latitude);
                 System.out.println("Satellites number: ");
                 System.out.println(numOfSatellites);
+                System.out.println("Cell signal:");
+                getCellsignal();
+                getwifiinfo();
+
+
                 sendBroadcastMessage(numOfSatellites);
                 sendBroadcastMessage(loc);
 
