@@ -4,6 +4,7 @@ package com.example.xiaoxiaoouyang.sunexposure;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ChangedPackages;
 import android.content.pm.PackageManager;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
@@ -18,6 +19,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Iterator;
+import java.util.ArrayList;
 
 
 public class GPSService extends Service {
@@ -46,6 +48,8 @@ public class GPSService extends Service {
     private MyLocationListener myLocationListener;
 
     private LocationManager lm;
+    private CSVManager csvManager = new CSVManager();
+    ArrayList<CSVRow> data = new ArrayList<CSVRow>();
 
 //    private Handler m_handler;
 //    private Runnable m_handlerTask;
@@ -181,6 +185,8 @@ public class GPSService extends Service {
         myLocationListener = null;
         myGpsListener = null;
         Toast.makeText(this, "Service Destroyed", Toast.LENGTH_SHORT).show();
+
+        csvManager.saveData(data);
     }
 
 
@@ -189,6 +195,13 @@ public class GPSService extends Service {
             Intent intent = new Intent(ACTION_LOCATION_BROADCAST);
             intent.putExtra(EXTRA_LATITUDE, location.getLatitude());
             intent.putExtra(EXTRA_LONGITUDE, location.getLongitude());
+            CSVRow r = new CSVRow();
+            r.timestamp = 0; // CHANGE
+            r.longitude = location.getLongitude();
+            r.latitude = location.getLatitude();
+            r.uvi = 12;
+            r.numGPSSat = 5;
+            data.add(r);
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }
     }
