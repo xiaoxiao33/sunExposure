@@ -12,5 +12,10 @@ public class CSVRow {
     public double latitude;
     public double uvi;
     public int numGPSSat;
+    public int wifiPerc;
+    public int cellDbm;
+    public int cellAsu;
+    public int cellLevel;
+
 
 }
