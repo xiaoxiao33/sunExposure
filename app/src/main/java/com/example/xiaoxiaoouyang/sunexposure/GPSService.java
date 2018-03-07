@@ -11,13 +11,24 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.telephony.CellInfo;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellInfoWcdma;
+import android.telephony.CellSignalStrengthGsm;
+import android.telephony.CellSignalStrengthLte;
+import android.telephony.CellSignalStrengthWcdma;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Iterator;
+import java.util.List;
 
 
 public class GPSService extends Service {
@@ -31,6 +42,9 @@ public class GPSService extends Service {
     boolean mAllowRebind;
 
     private Context context;
+    private double longitude = 0;
+    private double latitude = 0;
+    private int numOfSatellites = 0;
 
     public static final String
             ACTION_LOCATION_BROADCAST = GPSService.class.getName() + "LocationBroadcast",
@@ -43,12 +57,45 @@ public class GPSService extends Service {
 
 
     private MyGpsListener myGpsListener;
+
     private MyLocationListener myLocationListener;
+//    private TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
     private LocationManager lm;
 
-//    private Handler m_handler;
-//    private Runnable m_handlerTask;
+
+//    public int getCellSignal() {
+//        checkPermission(context);
+//        List<CellInfo> cellInfos = telephonyManager.getAllCellInfo();
+//        //This will give info of all sims present inside your mobile
+//        int strength = -1;
+//        if (cellInfos != null){
+//            for (int i = 0 ; i<cellInfos.size(); i++){
+//                if (cellInfos.get(i).isRegistered()){
+//                    if(cellInfos.get(i) instanceof CellInfoWcdma){
+//                        CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) telephonyManager.getAllCellInfo().get(0);
+//                        CellSignalStrengthWcdma cellSignalStrengthWcdma = cellInfoWcdma.getCellSignalStrength();
+//                        strength = cellSignalStrengthWcdma.getDbm();
+//                    } else if(cellInfos.get(i) instanceof CellInfoGsm){
+//                        CellInfoGsm cellInfogsm = (CellInfoGsm) telephonyManager.getAllCellInfo().get(0);
+//                        CellSignalStrengthGsm cellSignalStrengthGsm = cellInfogsm.getCellSignalStrength();
+//                        strength = cellSignalStrengthGsm.getDbm();
+//                    } else if(cellInfos.get(i) instanceof CellInfoLte){
+//                        CellInfoLte cellInfoLte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
+//                        CellSignalStrengthLte cellSignalStrengthLte = cellInfoLte.getCellSignalStrength();
+//                        strength = cellSignalStrengthLte.getDbm();
+//                    }
+//                }
+//            }
+//            return strength;
+//        }
+//        return strength;
+//    }
+
+
+
+    private Handler m_handler;
+    private Runnable m_handlerTask;
 
     private class MyLocationListener implements LocationListener {
 
@@ -59,7 +106,10 @@ public class GPSService extends Service {
 
         @Override
         public void onLocationChanged(Location location) {
-            sendBroadcastMessage(location);
+//            sendBroadcastMessage(location);
+            longitude = location.getLongitude();
+            latitude = location.getLatitude();
+
         }
 
         @Override
@@ -106,7 +156,8 @@ public class GPSService extends Service {
 
                             Log.d("SATELLITE",lSatellites);
                         }
-                        sendBroadcastMessage(i);
+//                        sendBroadcastMessage(i);
+                        numOfSatellites = i;
                     }
 
 
@@ -122,24 +173,28 @@ public class GPSService extends Service {
     public void onCreate() {
 
         super.onCreate();
-//
-//        m_handler = new Handler();
-//        m_handlerTask = new Runnable()
-//        {
-//            @Override
-//            public void run() {
-//                Location location = gpsController.getLocation();
-//                sendBroadcastMessage(location);
-//                m_handler.postDelayed(m_handlerTask, 2000);
-//
-//            }
-//        };
+        m_handler = new Handler();
+        m_handlerTask = new Runnable()
+        {
+            @Override
+            public void run() {
+                System.out.println("The longitude: ");
+                System.out.println(longitude);
+                System.out.println("The Latitude");
+                System.out.println(latitude);
+                System.out.println("Satellites number: ");
+                System.out.println(numOfSatellites);
+
+                m_handler.postDelayed(m_handlerTask, 3000);
+
+            }
+        };
     }
 
     /** The service is starting, due to a call to startService() */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-//        m_handlerTask.run();
+
         context = getApplicationContext();
         checkPermission(context);
 
@@ -147,6 +202,11 @@ public class GPSService extends Service {
         if (isGPSEnabled) {
             myGpsListener = new MyGpsListener(context);
             myLocationListener = new MyLocationListener(context);
+            m_handlerTask.run();
+
+//            int signal = getCellSignal();
+//            System.out.print("The Cell signal is" + String.valueOf(signal));
+
         }
         return START_STICKY;
     }
@@ -174,7 +234,7 @@ public class GPSService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        m_handler.removeCallbacks(m_handlerTask);
+        m_handler.removeCallbacks(m_handlerTask);
 
         lm.removeUpdates(myLocationListener);
         lm.removeGpsStatusListener(myGpsListener);
