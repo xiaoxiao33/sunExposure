@@ -18,6 +18,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.telephony.CellInfo;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellSignalStrength;
 import android.telephony.TelephonyManager;
@@ -25,6 +26,8 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class GPSService extends Service {
@@ -41,6 +44,7 @@ public class GPSService extends Service {
     private double longitude = 0;
     private double latitude = 0;
     private int numOfSatellites = 0;
+    private Location loc = null;
 
     public static final String
             ACTION_LOCATION_BROADCAST = GPSService.class.getName() + "LocationBroadcast",
@@ -55,10 +59,14 @@ public class GPSService extends Service {
     private MyGpsListener myGpsListener;
 
     private MyLocationListener myLocationListener;
-//    private TelephonyManager telephonyManager;
+    private TelephonyManager telephonyManager;
 
     private LocationManager lm;
-    private Location loc;
+
+    private CSVManager csvManager = new CSVManager();
+    ArrayList<CSVRow> data = new ArrayList<CSVRow>();
+
+
 
 
     private Handler m_handler;
@@ -67,7 +75,7 @@ public class GPSService extends Service {
     private class MyLocationListener implements LocationListener {
 
         public MyLocationListener(Context c) {
-            checkPermission(c);
+            checkLocationPermission(c);
             lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, this);
         }
 
@@ -94,7 +102,7 @@ public class GPSService extends Service {
         }
     }
 
-    private void getwifiinfo(){
+    private void getWifiInfo(){
         WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         if(wifi.isWifiEnabled()){
             WifiInfo wifiInfo = wifi.getConnectionInfo();
@@ -111,22 +119,27 @@ public class GPSService extends Service {
             wifi.setWifiEnabled(true);
         }
     }
-    private void getCellsignal(){
+    private void getCellSignal() {
+        checkPhonePermission(context);
         TelephonyManager telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(TELEPHONY_SERVICE);
-        CellInfoGsm cellinfogsm = (CellInfoGsm)telephonyManager.getAllCellInfo().get(0);
-        CellSignalStrength cellSignalStrengthGsm = cellinfogsm.getCellSignalStrength();
-        int dbm = cellSignalStrengthGsm.getDbm();
-        int asuLevel = cellSignalStrengthGsm.getAsuLevel();
-        int level = cellSignalStrengthGsm.getLevel();
-        Log.v("Signal", "dbm:" + String.valueOf(dbm));
-        Log.v("Signal", "asu:" + String.valueOf(asuLevel));
-        Log.v("Signal", "level:" + String.valueOf(level));
+        List<CellInfo> allCellInfo = telephonyManager.getAllCellInfo();
+        if (allCellInfo != null && allCellInfo.size() != 0) {
+            CellInfoGsm cellinfogsm = (CellInfoGsm)telephonyManager.getAllCellInfo().get(0);
+            CellSignalStrength cellSignalStrengthGsm = cellinfogsm.getCellSignalStrength();
+            int dbm = cellSignalStrengthGsm.getDbm();
+            int asuLevel = cellSignalStrengthGsm.getAsuLevel();
+            int level = cellSignalStrengthGsm.getLevel();
+            Log.v("Signal", "dbm:" + String.valueOf(dbm));
+            Log.v("Signal", "asu:" + String.valueOf(asuLevel));
+            Log.v("Signal", "level:" + String.valueOf(level));
+        }
+
     }
 
     private class MyGpsListener implements GpsStatus.Listener {
 
         public MyGpsListener(Context c) {
-            checkPermission(c);
+            checkLocationPermission(c);
             lm.addGpsStatusListener(myGpsListener);
             System.out.println("GPSstatus Listener attached");
         }
@@ -135,7 +148,7 @@ public class GPSService extends Service {
         public void onGpsStatusChanged(int event){
             if(event==GpsStatus.GPS_EVENT_SATELLITE_STATUS){
                 try{
-                    checkPermission(context);
+                    checkLocationPermission(context);
                     GpsStatus gpsStatus = lm.getGpsStatus(null);
                     if(gpsStatus != null) {
                         Iterable<GpsSatellite>satellites = gpsStatus.getSatellites();
@@ -153,7 +166,6 @@ public class GPSService extends Service {
 
                             Log.d("SATELLITE",lSatellites);
                         }
-//                        sendBroadcastMessage(i);
                         numOfSatellites = i;
                     }
 
@@ -182,8 +194,8 @@ public class GPSService extends Service {
                 System.out.println("Satellites number: ");
                 System.out.println(numOfSatellites);
                 System.out.println("Cell signal:");
-                getCellsignal();
-                getwifiinfo();
+                getCellSignal();
+                getWifiInfo();
 
 
                 sendBroadcastMessage(numOfSatellites);
@@ -191,6 +203,17 @@ public class GPSService extends Service {
 
 
                 m_handler.postDelayed(m_handlerTask, 1000);
+
+                CSVRow r = new CSVRow();
+                r.timestamp = 0; // CHANGE
+                r.longitude = longitude;
+                r.latitude = latitude;
+                r.uvi = 12;
+                r.numGPSSat = 5;
+                data.add(r);
+
+                m_handler.postDelayed(m_handlerTask, 3000);
+
 
             }
         };
@@ -201,16 +224,13 @@ public class GPSService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         context = getApplicationContext();
-        checkPermission(context);
+        checkLocationPermission(context);
 
         boolean isGPSEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (isGPSEnabled) {
             myGpsListener = new MyGpsListener(context);
             myLocationListener = new MyLocationListener(context);
             m_handlerTask.run();
-
-//            int signal = getCellSignal();
-//            System.out.print("The Cell signal is" + String.valueOf(signal));
 
         }
         return START_STICKY;
@@ -246,6 +266,8 @@ public class GPSService extends Service {
         myLocationListener = null;
         myGpsListener = null;
         Toast.makeText(this, "Service Destroyed", Toast.LENGTH_SHORT).show();
+
+        csvManager.saveData(data);
     }
 
 
@@ -254,6 +276,13 @@ public class GPSService extends Service {
             Intent intent = new Intent(ACTION_LOCATION_BROADCAST);
             intent.putExtra(EXTRA_LATITUDE, location.getLatitude());
             intent.putExtra(EXTRA_LONGITUDE, location.getLongitude());
+            CSVRow r = new CSVRow();
+            r.timestamp = 0; // CHANGE
+            r.longitude = location.getLongitude();
+            r.latitude = location.getLatitude();
+            r.uvi = 12;
+            r.numGPSSat = 5;
+            data.add(r);
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }
     }
@@ -267,18 +296,28 @@ public class GPSService extends Service {
     }
 
 
-    private void checkPermission(Context context) {
+    private void checkLocationPermission(Context context) {
         if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION ) != PackageManager.PERMISSION_GRANTED) {
          Log.e("first","error");
         }
         try {
             lm = (LocationManager) context.getSystemService(LOCATION_SERVICE);
-            //telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private void checkPhonePermission(Context context) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED) {
+            Log.e("first","error");
+        }
+        try {
+            telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         } catch (Exception e){
             e.printStackTrace();
         }
 
     }
-
 }
