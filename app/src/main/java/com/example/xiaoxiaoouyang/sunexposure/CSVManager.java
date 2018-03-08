@@ -28,7 +28,6 @@ public class CSVManager {
     CSVManager() {
         // Use current time to name the file
         Calendar c = Calendar.getInstance();
-
         fileName = "SunExposureData.csv";
     }
 
@@ -127,7 +126,7 @@ public class CSVManager {
             }
 
             for (CSVRow r : data) {
-                Log.v("Sensor", r.timestamp + " " + r.longitude + " " + r.latitude + " " + r.uvi + " " + r.numGPSSat);
+                Log.v("Sensor", r.timestamp + " " + r.longitude + " " + r.latitude + " " + r.uvi + " " + r.numGPSSat  + " " + r.wifiPerc + " " + r.cellLevel);
 
                 String[] row = {
                         String.valueOf(r.timestamp),
@@ -135,6 +134,10 @@ public class CSVManager {
                         String.valueOf(r.latitude),
                         String.valueOf(r.uvi),
                         String.valueOf(r.numGPSSat),
+                        String.valueOf(r.wifiPerc),
+                        String.valueOf(r.cellDbm),
+                        String.valueOf(r.cellAsu),
+                        String.valueOf(r.cellLevel),
                 };
 
                 writer.writeNext(row);

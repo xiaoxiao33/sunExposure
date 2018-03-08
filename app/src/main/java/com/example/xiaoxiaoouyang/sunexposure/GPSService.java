@@ -18,15 +18,21 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+
 import android.telephony.CellInfo;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellSignalStrength;
 import android.telephony.TelephonyManager;
+
+
+import java.util.Calendar;
+
 import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Iterator;
 import java.util.ArrayList;
+
 import java.util.List;
 
 
@@ -65,6 +71,12 @@ public class GPSService extends Service {
 
     private CSVManager csvManager = new CSVManager();
     ArrayList<CSVRow> data = new ArrayList<CSVRow>();
+    private Calendar cal;
+    private int cellAsu;
+    private int cellDbm;
+    private int cellLevel;
+    private int wifiPerc;
+
 
 
 
@@ -81,7 +93,6 @@ public class GPSService extends Service {
 
         @Override
         public void onLocationChanged(Location location) {
-//            sendBroadcastMessage(location);
             longitude = location.getLongitude();
             latitude = location.getLatitude();
             loc = location;
@@ -107,13 +118,12 @@ public class GPSService extends Service {
         if(wifi.isWifiEnabled()){
             WifiInfo wifiInfo = wifi.getConnectionInfo();
             if(String.valueOf(wifiInfo.getSupplicantState()).equals("COMPLETED")){
-                Toast.makeText(this, wifiInfo.getSSID()+"", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, wifiInfo.getSSID()+"", Toast.LENGTH_SHORT).show();
                 int rssi = wifiInfo.getRssi();
                 int level = WifiManager.calculateSignalLevel(rssi, 10);
-                int percentage = (int) ((level/10.0)*100);
-                Log.v("wifi", "perc:" + String.valueOf(percentage));
+                wifiPerc = (int) ((level/10.0)*100);
             }else{
-                Toast.makeText(this, "please connect to a wifi network! ", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, "please connect to a wifi network! ", Toast.LENGTH_SHORT).show();
             }
         }else {
             wifi.setWifiEnabled(true);
@@ -121,17 +131,14 @@ public class GPSService extends Service {
     }
     private void getCellSignal() {
         checkPhonePermission(context);
-        TelephonyManager telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(TELEPHONY_SERVICE);
+        telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(TELEPHONY_SERVICE);
         List<CellInfo> allCellInfo = telephonyManager.getAllCellInfo();
         if (allCellInfo != null && allCellInfo.size() != 0) {
             CellInfoGsm cellinfogsm = (CellInfoGsm)telephonyManager.getAllCellInfo().get(0);
             CellSignalStrength cellSignalStrengthGsm = cellinfogsm.getCellSignalStrength();
-            int dbm = cellSignalStrengthGsm.getDbm();
-            int asuLevel = cellSignalStrengthGsm.getAsuLevel();
-            int level = cellSignalStrengthGsm.getLevel();
-            Log.v("Signal", "dbm:" + String.valueOf(dbm));
-            Log.v("Signal", "asu:" + String.valueOf(asuLevel));
-            Log.v("Signal", "level:" + String.valueOf(level));
+            cellDbm = cellSignalStrengthGsm.getDbm();
+            cellAsu = cellSignalStrengthGsm.getAsuLevel();
+            cellLevel = cellSignalStrengthGsm.getLevel();
         }
 
     }
@@ -177,7 +184,6 @@ public class GPSService extends Service {
     }
 
 
-
     @Override
     public void onCreate() {
 
@@ -187,29 +193,20 @@ public class GPSService extends Service {
         {
             @Override
             public void run() {
-                System.out.println("The longitude: ");
-                System.out.println(longitude);
-                System.out.println("The Latitude");
-                System.out.println(latitude);
-                System.out.println("Satellites number: ");
-                System.out.println(numOfSatellites);
-                System.out.println("Cell signal:");
-                getCellSignal();
+
                 getWifiInfo();
-
-
-                sendBroadcastMessage(numOfSatellites);
-                sendBroadcastMessage(loc);
-
-
-                m_handler.postDelayed(m_handlerTask, 1000);
-
+                getCellSignal();
                 CSVRow r = new CSVRow();
-                r.timestamp = 0; // CHANGE
+                r.timestamp = Calendar.getInstance().getTimeInMillis();
                 r.longitude = longitude;
                 r.latitude = latitude;
                 r.uvi = 12;
-                r.numGPSSat = 5;
+                r.numGPSSat = numOfSatellites;
+                r.wifiPerc = wifiPerc;
+                r.cellDbm = cellDbm;
+                r.cellAsu = cellAsu;
+                r.cellLevel = cellLevel;
+
                 data.add(r);
 
                 m_handler.postDelayed(m_handlerTask, 3000);
