@@ -28,6 +28,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
 
 public class GPSService extends Service {
     /** indicates how to behave if the service is killed */
@@ -44,6 +48,7 @@ public class GPSService extends Service {
     private double latitude = 0;
     private int numOfSatellites = 0;
     private Location loc = null;
+    private double uviMeasure = 0.0;
 
     public static final String
             ACTION_LOCATION_BROADCAST = GPSService.class.getName() + "LocationBroadcast",
@@ -208,6 +213,7 @@ public class GPSService extends Service {
                 getCellSignal();
                 CSVRow r = new CSVRow();
                 r.timestamp = Calendar.getInstance().getTimeInMillis();
+                System.out.println(UVIMeasurement(longitude, latitude));
                 r.longitude = longitude;
                 r.latitude = latitude;
                 r.uvi = 12;
@@ -321,6 +327,37 @@ public class GPSService extends Service {
         } catch (Exception e){
             e.printStackTrace();
         }
+
+    }
+
+    private String UVIMeasurement(double longitude, double latitude) {
+        longitude = (double)Math.round(longitude * 100d) / 100d;
+        latitude = (double)Math.round(latitude * 100d) / 100d;
+
+        String address = "https://api.openuv.io/api/v1/uv?lat=" + String.valueOf(latitude) + "&lng=" + String.valueOf(longitude) + "&dt=2018-01-24T10%3A50%3A52.283Z";
+
+        System.out.println(longitude);
+        System.out.println(latitude);
+        System.out.println(address);
+
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url(address)
+                .get()
+                .addHeader("x-access-token", "f3be6e8351172dcf678a2a8ef76ba7f0")
+                .build();
+        try {
+            Response response = client.newCall(request).execute();
+            return response.body().string();
+
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+
+
 
     }
 }
