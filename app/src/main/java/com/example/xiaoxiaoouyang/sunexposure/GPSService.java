@@ -4,41 +4,51 @@ package com.example.xiaoxiaoouyang.sunexposure;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ChangedPackages;
 import android.content.pm.PackageManager;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-//import android.telephony.CellInfo;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellSignalStrength;
 import android.telephony.TelephonyManager;
-
-import java.util.Calendar;
-
-import android.telephony.CellInfoLte;
-import android.telephony.CellInfoWcdma;
-import android.telephony.CellSignalStrengthGsm;
-import android.telephony.CellSignalStrengthLte;
-import android.telephony.CellSignalStrengthWcdma;
-import android.telephony.PhoneStateListener;
-
 import android.util.Log;
 import android.widget.Toast;
 
-import java.util.Iterator;
-import java.util.ArrayList;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
-import java.util.List;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.text.NumberFormat;
+import java.text.DecimalFormat;
+import java.lang.*;
+import java.util.Map;
+//import android.telephony.CellInfo;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+//import com.android.volley.AuthFailureError;
+//import com.android.volley.Request;
+//import com.android.volley.RequestQueue;
+//import com.android.volley.Response;
+//import com.android.volley.VolleyError;
+//import com.android.volley.toolbox.JsonObjectRequest;
+//import com.android.volley.toolbox.Volley;
+
 
 
 public class GPSService extends Service {
@@ -62,7 +72,6 @@ public class GPSService extends Service {
             EXTRA_LONGITUDE = "extra_longitude",
             ACTION_SATELLITES_BROADCAST = GPSService.class.getName() + "SatellitesBroadcast",
             EXTRA_COUNT = "extra_count";
-
 
 
 
@@ -234,6 +243,7 @@ public class GPSService extends Service {
                 getwifiinfo();
                 cellsignal();
                 CSVRow r = new CSVRow();
+                System.out.println(UVIMeasurement(longitude, latitude));
                 r.timestamp = Calendar.getInstance().getTimeInMillis();
                 r.longitude = longitude;
                 r.latitude = latitude;
@@ -344,4 +354,68 @@ public class GPSService extends Service {
 
     }
 
-}
+
+    private String UVIMeasurement(double longitude, double latitude) {
+//        longitude = location.getLongitude();
+//        latitude = location.getLatitude();
+
+//        NumberFormat formatter = new DecimalFormat("#0.000");
+//
+//        longitude = Integer.parseInt(longitude);
+//
+//
+//        longitude = formatter.format(longitude);
+//        latitude = Integer.toString(formatter.format(latitude));
+
+        longitude = (double)Math.round(longitude * 100d) / 100d;
+        latitude = (double)Math.round(latitude * 100d) / 100d;
+
+        String address = "https://api.openuv.io/api/v1/uv?lat=" + String.valueOf(latitude) + "&lng=" + String.valueOf(longitude) + "&dt=2018-01-24T10%3A50%3A52.283Z";
+
+        System.out.println(longitude);
+        System.out.println(latitude);
+        System.out.println(address);
+//        Context mContext = getApplicationContext();
+//        RequestQueue requestQueue = Volley.newRequestQueue(mContext);
+//
+//        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+//                (Request.Method.GET, address, null, new Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject response) {
+//                        System.out.println("Response: " + response.toString());
+//                    }
+//                }, new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        // TODO: Handle error
+//                        System.out.println("EEEERORRRRR");
+//                        error.printStackTrace();
+//
+//                    }
+//                });
+//
+//        requestQueue.add(jsonObjectRequest);
+
+//        return "aaa";
+
+                OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url(address)
+                .get()
+                .addHeader("x-access-token", "f3be6e8351172dcf678a2a8ef76ba7f0")
+                .build();
+        try {
+            Response response = client.newCall(request).execute();
+
+            return response.body().string();
+
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+
+
+
+}}
