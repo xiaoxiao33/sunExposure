@@ -119,14 +119,18 @@ public class CSVManager {
                         "Longitude",
                         "Latitude",
                         "UVI",
-                        "Num GPS"
+                        "Num GPS",
+                        "wifi Perc",
+                        "CellDbm",
+                        "CellAsu",
+                        "CellLevel"
                 };
 
                 writer.writeNext(header);
             }
 
             for (CSVRow r : data) {
-                Log.v("Sensor", r.timestamp + " " + r.longitude + " " + r.latitude + " " + r.uvi + " " + r.numGPSSat  + " " + r.wifiPerc + " " + r.cellLevel);
+                Log.v("Sensor", r.timestamp + " " + r.longitude + " " + r.latitude + " " + r.uvi + " " + r.numGPSSat  + " " + r.wifiPerc + " " + r.cellDbm);
 
                 String[] row = {
                         String.valueOf(r.timestamp),

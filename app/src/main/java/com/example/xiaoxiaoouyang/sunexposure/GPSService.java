@@ -6,7 +6,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
@@ -18,21 +17,15 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-
 import android.telephony.CellInfo;
-import android.telephony.CellInfoGsm;
-import android.telephony.CellSignalStrength;
+import android.telephony.CellInfoLte;
+import android.telephony.CellSignalStrengthLte;
 import android.telephony.TelephonyManager;
-
-
-import java.util.Calendar;
-
 import android.util.Log;
 import android.widget.Toast;
 
-import java.util.Iterator;
 import java.util.ArrayList;
-
+import java.util.Calendar;
 import java.util.List;
 
 
@@ -63,11 +56,11 @@ public class GPSService extends Service {
 
 
     private MyGpsListener myGpsListener;
-
     private MyLocationListener myLocationListener;
     private TelephonyManager telephonyManager;
-
     private LocationManager lm;
+
+    boolean isGPSEnabled = false;
 
     private CSVManager csvManager = new CSVManager();
     ArrayList<CSVRow> data = new ArrayList<CSVRow>();
@@ -93,9 +86,10 @@ public class GPSService extends Service {
 
         @Override
         public void onLocationChanged(Location location) {
-            longitude = location.getLongitude();
-            latitude = location.getLatitude();
-            loc = location;
+//            longitude = location.getLongitude();
+//            latitude = location.getLatitude();
+//            loc = location;
+
 
         }
 
@@ -118,10 +112,7 @@ public class GPSService extends Service {
         if(wifi.isWifiEnabled()){
             WifiInfo wifiInfo = wifi.getConnectionInfo();
             if(String.valueOf(wifiInfo.getSupplicantState()).equals("COMPLETED")){
-                //Toast.makeText(this, wifiInfo.getSSID()+"", Toast.LENGTH_SHORT).show();
-                int rssi = wifiInfo.getRssi();
-                int level = WifiManager.calculateSignalLevel(rssi, 10);
-                wifiPerc = (int) ((level/10.0)*100);
+                wifiPerc = WifiManager.calculateSignalLevel(wifiInfo.getRssi(), 100);
             }else{
                 //Toast.makeText(this, "please connect to a wifi network! ", Toast.LENGTH_SHORT).show();
             }
@@ -134,11 +125,18 @@ public class GPSService extends Service {
         telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(TELEPHONY_SERVICE);
         List<CellInfo> allCellInfo = telephonyManager.getAllCellInfo();
         if (allCellInfo != null && allCellInfo.size() != 0) {
-            CellInfoGsm cellinfogsm = (CellInfoGsm)telephonyManager.getAllCellInfo().get(0);
-            CellSignalStrength cellSignalStrengthGsm = cellinfogsm.getCellSignalStrength();
-            cellDbm = cellSignalStrengthGsm.getDbm();
-            cellAsu = cellSignalStrengthGsm.getAsuLevel();
-            cellLevel = cellSignalStrengthGsm.getLevel();
+//            CellInfo cellInfo = telephonyManager.getAllCellInfo().get(0);
+//            CellInfoGsm cellinfogsm = (CellInfoGsm) cellInfo;
+//            CellInfoGsm cellinfogsm = (CellInfoGsm)telephonyManager.getAllCellInfo().get(0);
+//            CellSignalStrength cellSignalStrengthGsm = cellinfogsm.getCellSignalStrength();
+//            cellDbm = cellSignalStrengthGsm.getDbm();
+//            cellAsu = cellSignalStrengthGsm.getAsuLevel();
+//            cellLevel = cellSignalStrengthGsm.getLevel();
+            CellInfoLte cellInfoLte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
+            CellSignalStrengthLte cellSignalStrengthLte = cellInfoLte.getCellSignalStrength();
+            cellDbm = cellSignalStrengthLte.getDbm();
+            cellAsu = cellSignalStrengthLte.getAsuLevel();
+            cellLevel = cellSignalStrengthLte.getLevel();
         }
 
     }
@@ -153,33 +151,33 @@ public class GPSService extends Service {
 
         @Override
         public void onGpsStatusChanged(int event){
-            if(event==GpsStatus.GPS_EVENT_SATELLITE_STATUS){
-                try{
-                    checkLocationPermission(context);
-                    GpsStatus gpsStatus = lm.getGpsStatus(null);
-                    if(gpsStatus != null) {
-                        Iterable<GpsSatellite>satellites = gpsStatus.getSatellites();
-                        Iterator<GpsSatellite>sat = satellites.iterator();
-                        int i = 0;
-                        while (sat.hasNext()) {
-                            GpsSatellite satellite = sat.next();
-                            String lSatellites;
-                            lSatellites = "Satellite" + (i++) + ": "
-                                    + satellite.getPrn() + ","
-                                    + satellite.usedInFix() + ","
-                                    + satellite.getSnr() + ","
-                                    + satellite.getAzimuth() + ","
-                                    + satellite.getElevation()+ "\n\n";
-
-                            Log.d("SATELLITE",lSatellites);
-                        }
-                        numOfSatellites = i;
-                    }
-
-
-                }
-                catch(Exception ex){}
-            }
+//            if(event==GpsStatus.GPS_EVENT_SATELLITE_STATUS){
+//                try{
+//                    checkLocationPermission(context);
+//                    GpsStatus gpsStatus = lm.getGpsStatus(null);
+//                    if(gpsStatus != null) {
+//                        Iterable<GpsSatellite>satellites = gpsStatus.getSatellites();
+//                        Iterator<GpsSatellite>sat = satellites.iterator();
+//                        int i = 0;
+//                        while (sat.hasNext()) {
+//                            GpsSatellite satellite = sat.next();
+//                            String lSatellites;
+//                            lSatellites = "Satellite" + (i++) + ": "
+//                                    + satellite.getPrn() + ","
+//                                    + satellite.usedInFix() + ","
+//                                    + satellite.getSnr() + ","
+//                                    + satellite.getAzimuth() + ","
+//                                    + satellite.getElevation()+ "\n\n";
+//
+//                            Log.d("SATELLITE",lSatellites);
+//                        }
+//                        numOfSatellites = i;
+//                    }
+//
+//
+//                }
+//                catch(Exception ex){}
+//            }
         }
     }
 
@@ -193,6 +191,18 @@ public class GPSService extends Service {
         {
             @Override
             public void run() {
+
+                checkLocationPermission(context);
+                Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+                if (location != null) {
+                    longitude = location.getLongitude();
+                    latitude = location.getLatitude();
+                    numOfSatellites = location.getExtras().getInt("satellites") ;
+
+                }
+
+                loc = location;
 
                 getWifiInfo();
                 getCellSignal();
@@ -209,6 +219,9 @@ public class GPSService extends Service {
 
                 data.add(r);
 
+                sendBroadcastMessage(loc);
+                sendBroadcastMessage(numOfSatellites);
+                
                 m_handler.postDelayed(m_handlerTask, 3000);
 
 
@@ -223,7 +236,7 @@ public class GPSService extends Service {
         context = getApplicationContext();
         checkLocationPermission(context);
 
-        boolean isGPSEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        isGPSEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (isGPSEnabled) {
             myGpsListener = new MyGpsListener(context);
             myLocationListener = new MyLocationListener(context);
@@ -273,13 +286,6 @@ public class GPSService extends Service {
             Intent intent = new Intent(ACTION_LOCATION_BROADCAST);
             intent.putExtra(EXTRA_LATITUDE, location.getLatitude());
             intent.putExtra(EXTRA_LONGITUDE, location.getLongitude());
-            CSVRow r = new CSVRow();
-            r.timestamp = 0; // CHANGE
-            r.longitude = location.getLongitude();
-            r.latitude = location.getLatitude();
-            r.uvi = 12;
-            r.numGPSSat = 5;
-            data.add(r);
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }
     }

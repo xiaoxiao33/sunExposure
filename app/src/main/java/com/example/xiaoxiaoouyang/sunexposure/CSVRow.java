@@ -1,10 +1,5 @@
 package com.example.xiaoxiaoouyang.sunexposure;
 
-/**
- * Created by samirjoshi on 3/6/18.
- */
-
-import java.util.Arrays;
 
 public class CSVRow {
     public long timestamp;
