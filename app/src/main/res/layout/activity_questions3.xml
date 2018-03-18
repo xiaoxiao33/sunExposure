@@ -26,6 +26,7 @@
         android:layout_marginStart="148dp"
         android:text="Next"
         android:onClick="goToQuestionFour"
+        android:background="#E8EAF6"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

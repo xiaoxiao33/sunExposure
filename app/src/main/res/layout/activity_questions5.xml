@@ -25,6 +25,7 @@
         android:layout_marginEnd="148dp"
         android:layout_marginStart="148dp"
         android:text="Done"
+        android:background="#E8EAF6"
         android:onClick="doneGoToMain"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

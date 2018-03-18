@@ -30,6 +30,7 @@
         android:layout_marginStart="148dp"
         android:text="Begin"
         android:visibility="visible"
+        android:background="#E8EAF6"
         android:onClick="goToQuestionTwo"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

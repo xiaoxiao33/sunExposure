@@ -17,8 +17,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-//        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-//        StrictMode.setThreadPolicy(policy);
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
         setContentView(R.layout.activity_main);
 
@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onReceive(Context context, Intent intent) {
                         double latitude = intent.getDoubleExtra(GPSService.EXTRA_LATITUDE, 0);
                         double longitude = intent.getDoubleExtra(GPSService.EXTRA_LONGITUDE, 0);
-                        textView.setText("Lat: " + latitude + ", Lng: " + longitude);
+                        textView.setText("Latitude: " + latitude + ", Longitude: " + longitude);
                     }
                 }, new IntentFilter(GPSService.ACTION_LOCATION_BROADCAST)
         );
@@ -42,8 +42,20 @@ public class MainActivity extends AppCompatActivity {
                 new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context context, Intent intent) {
-                        int numOfSatellites = intent.getIntExtra(GPSService.EXTRA_COUNT, 0);
-                        textView2.setText("Number of Satellites: "+ numOfSatellites);
+                        double index = intent.getDoubleExtra(GPSService.EXTRA_UVI, 0);
+                        textView2.setText(index + "");
+                    }
+                }, new IntentFilter(GPSService.ACTION_UVI_BROADCAST)
+        );
+
+        final TextView textView3 = (TextView) findViewById(R.id.textView11);
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        int index = intent.getIntExtra(GPSService.EXTRA_COUNT, 0);
+                        textView3.setText("Number of Satellites: " + index);
                     }
                 }, new IntentFilter(GPSService.ACTION_SATELLITES_BROADCAST)
         );

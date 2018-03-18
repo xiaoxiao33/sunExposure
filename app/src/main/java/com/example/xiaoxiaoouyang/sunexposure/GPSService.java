@@ -24,13 +24,20 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+
+import org.json.JSONObject;
 
 
 public class GPSService extends Service {
@@ -49,11 +56,14 @@ public class GPSService extends Service {
     private int numOfSatellites = 0;
     private Location loc = null;
     private double uviMeasure = 0.0;
+    Calendar c = Calendar.getInstance();
 
     public static final String
             ACTION_LOCATION_BROADCAST = GPSService.class.getName() + "LocationBroadcast",
             EXTRA_LATITUDE = "extra_latitude",
             EXTRA_LONGITUDE = "extra_longitude",
+            ACTION_UVI_BROADCAST = GPSService.class.getName() + "UviBroadcast",
+            EXTRA_UVI = "extra_uvi",
             ACTION_SATELLITES_BROADCAST = GPSService.class.getName() + "SatellitesBroadcast",
             EXTRA_COUNT = "extra_count";
 
@@ -75,10 +85,6 @@ public class GPSService extends Service {
     private int cellLevel;
     private int wifiPerc;
 
-
-
-
-
     private Handler m_handler;
     private Runnable m_handlerTask;
 
@@ -91,10 +97,6 @@ public class GPSService extends Service {
 
         @Override
         public void onLocationChanged(Location location) {
-//            longitude = location.getLongitude();
-//            latitude = location.getLatitude();
-//            loc = location;
-
 
         }
 
@@ -130,18 +132,18 @@ public class GPSService extends Service {
         telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(TELEPHONY_SERVICE);
         List<CellInfo> allCellInfo = telephonyManager.getAllCellInfo();
         if (allCellInfo != null && allCellInfo.size() != 0) {
-//            CellInfo cellInfo = telephonyManager.getAllCellInfo().get(0);
-//            CellInfoGsm cellinfogsm = (CellInfoGsm) cellInfo;
-//            CellInfoGsm cellinfogsm = (CellInfoGsm)telephonyManager.getAllCellInfo().get(0);
-//            CellSignalStrength cellSignalStrengthGsm = cellinfogsm.getCellSignalStrength();
-//            cellDbm = cellSignalStrengthGsm.getDbm();
-//            cellAsu = cellSignalStrengthGsm.getAsuLevel();
-//            cellLevel = cellSignalStrengthGsm.getLevel();
-            CellInfoLte cellInfoLte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
-            CellSignalStrengthLte cellSignalStrengthLte = cellInfoLte.getCellSignalStrength();
-            cellDbm = cellSignalStrengthLte.getDbm();
-            cellAsu = cellSignalStrengthLte.getAsuLevel();
-            cellLevel = cellSignalStrengthLte.getLevel();
+            for (int i = 0 ; i < allCellInfo.size(); i++) {
+                if (allCellInfo.get(i).isRegistered()) {
+                    if (allCellInfo.get(i) instanceof CellInfoLte) {
+                        CellInfoLte cellInfoLte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
+                        CellSignalStrengthLte cellSignalStrengthLte = cellInfoLte.getCellSignalStrength();
+                        cellDbm = cellSignalStrengthLte.getDbm();
+                        cellAsu = cellSignalStrengthLte.getAsuLevel();
+                        cellLevel = cellSignalStrengthLte.getLevel();
+                        break;
+                    }
+                }
+            }
         }
 
     }
@@ -156,33 +158,7 @@ public class GPSService extends Service {
 
         @Override
         public void onGpsStatusChanged(int event){
-//            if(event==GpsStatus.GPS_EVENT_SATELLITE_STATUS){
-//                try{
-//                    checkLocationPermission(context);
-//                    GpsStatus gpsStatus = lm.getGpsStatus(null);
-//                    if(gpsStatus != null) {
-//                        Iterable<GpsSatellite>satellites = gpsStatus.getSatellites();
-//                        Iterator<GpsSatellite>sat = satellites.iterator();
-//                        int i = 0;
-//                        while (sat.hasNext()) {
-//                            GpsSatellite satellite = sat.next();
-//                            String lSatellites;
-//                            lSatellites = "Satellite" + (i++) + ": "
-//                                    + satellite.getPrn() + ","
-//                                    + satellite.usedInFix() + ","
-//                                    + satellite.getSnr() + ","
-//                                    + satellite.getAzimuth() + ","
-//                                    + satellite.getElevation()+ "\n\n";
-//
-//                            Log.d("SATELLITE",lSatellites);
-//                        }
-//                        numOfSatellites = i;
-//                    }
-//
-//
-//                }
-//                catch(Exception ex){}
-//            }
+
         }
     }
 
@@ -213,10 +189,10 @@ public class GPSService extends Service {
                 getCellSignal();
                 CSVRow r = new CSVRow();
                 r.timestamp = Calendar.getInstance().getTimeInMillis();
-                System.out.println(UVIMeasurement(longitude, latitude));
+                double u = UVIMeasurement(longitude, latitude);
                 r.longitude = longitude;
                 r.latitude = latitude;
-                r.uvi = 12;
+                r.uvi = uviMeasure;
                 r.numGPSSat = numOfSatellites;
                 r.wifiPerc = wifiPerc;
                 r.cellDbm = cellDbm;
@@ -226,9 +202,10 @@ public class GPSService extends Service {
                 data.add(r);
 
                 sendBroadcastMessage(loc);
+                sendBroadcastMessage(uviMeasure);
                 sendBroadcastMessage(numOfSatellites);
                 
-                m_handler.postDelayed(m_handlerTask, 3000);
+                m_handler.postDelayed(m_handlerTask, 60000);
 
 
             }
@@ -241,6 +218,7 @@ public class GPSService extends Service {
 
         context = getApplicationContext();
         checkLocationPermission(context);
+        Toast.makeText(this, "Service Started", Toast.LENGTH_SHORT).show();
 
         isGPSEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (isGPSEnabled) {
@@ -296,13 +274,23 @@ public class GPSService extends Service {
         }
     }
 
-    private void sendBroadcastMessage(int count) {
+    private void sendBroadcastMessage(double index) {
 
-        Intent intent = new Intent(ACTION_SATELLITES_BROADCAST);
-        intent.putExtra(EXTRA_COUNT, count);
+        Intent intent = new Intent(ACTION_UVI_BROADCAST);
+        intent.putExtra(EXTRA_UVI, index);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 
     }
+
+    private void sendBroadcastMessage(int number) {
+
+        Intent intent = new Intent(ACTION_SATELLITES_BROADCAST);
+        intent.putExtra(EXTRA_COUNT, number);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+
+    }
+
+
 
 
     private void checkLocationPermission(Context context) {
@@ -330,31 +318,41 @@ public class GPSService extends Service {
 
     }
 
-    private String UVIMeasurement(double longitude, double latitude) {
+    private double UVIMeasurement(double longitude, double latitude) {
         longitude = (double)Math.round(longitude * 100d) / 100d;
         latitude = (double)Math.round(latitude * 100d) / 100d;
 
-        String address = "https://api.openuv.io/api/v1/uv?lat=" + String.valueOf(latitude) + "&lng=" + String.valueOf(longitude) + "&dt=2018-01-24T10%3A50%3A52.283Z";
 
-        System.out.println(longitude);
-        System.out.println(latitude);
-        System.out.println(address);
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+        df.setTimeZone(tz);
+        String dateString = df.format(new Date());
+
+        String address = "https://api.openuv.io/api/v1/uv?lat=" + String.valueOf(latitude) + "&lng=" + String.valueOf(longitude) + "&dt=" + dateString;
+
+//        System.out.println(longitude);
+//        System.out.println(latitude);
+//        System.out.println(address);
 
         OkHttpClient client = new OkHttpClient();
 
         Request request = new Request.Builder()
                 .url(address)
                 .get()
-                .addHeader("x-access-token", "f3be6e8351172dcf678a2a8ef76ba7f0")
+                .addHeader("x-access-token", "27191f8e0ff1adc0bbc7449b1e0d862f")
                 .build();
         try {
             Response response = client.newCall(request).execute();
-            return response.body().string();
+            JSONObject responseJson = new JSONObject(response.body().string());
 
+            uviMeasure = responseJson.getJSONObject("result").getDouble("uv");
+//            System.out.println("UVI NUM:" + Double.toString(uviMeasure));
+
+            return 0;
         }
         catch (Exception e){
             e.printStackTrace();
-            return null;
+            return -1;
         }
 
 
