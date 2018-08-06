@@ -115,6 +115,7 @@ public class CSVManager {
                 writer = new CSVWriter(new FileWriter(f.getPath()));
                 // Write header
                 String[] header = {
+                        "Date",
                         "Time",
                         "Longitude",
                         "Latitude",
@@ -123,16 +124,18 @@ public class CSVManager {
                         "wifi Perc",
                         "CellDbm",
                         "CellAsu",
-                        "CellLevel"
+                        "CellLevel",
+                        "IOthresh"
                 };
 
                 writer.writeNext(header);
             }
 
             for (CSVRow r : data) {
-                Log.v("Sensor", r.timestamp + " " + r.longitude + " " + r.latitude + " " + r.uvi + " " + r.numGPSSat  + " " + r.wifiPerc + " " + r.cellDbm);
+                Log.v("Sensor", r.mtime + " " + r.timestamp + " " + r.longitude + " " + r.latitude + " " + r.uvi + " " + r.numGPSSat  + " " + r.wifiPerc + " " + r.cellDbm + " " + r.IOthresh);
 
                 String[] row = {
+                        String.valueOf(r.mtime),
                         String.valueOf(r.timestamp),
                         String.valueOf(r.longitude),
                         String.valueOf(r.latitude),
@@ -142,11 +145,12 @@ public class CSVManager {
                         String.valueOf(r.cellDbm),
                         String.valueOf(r.cellAsu),
                         String.valueOf(r.cellLevel),
+                        String.valueOf(r.IOthresh)
                 };
 
                 writer.writeNext(row);
             }
-
+            System.out.println("SAVING DATA!!!");
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();

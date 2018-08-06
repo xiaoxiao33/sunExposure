@@ -2,6 +2,7 @@ package com.example.xiaoxiaoouyang.sunexposure;
 
 
 public class CSVRow {
+    public String mtime;
     public long timestamp;
     public double longitude;
     public double latitude;
@@ -11,6 +12,7 @@ public class CSVRow {
     public int cellDbm;
     public int cellAsu;
     public int cellLevel;
+    public boolean IOthresh;
 
 
 }
